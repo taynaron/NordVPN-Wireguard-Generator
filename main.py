@@ -49,7 +49,7 @@ def fetch_nordlynx_private_key(token: str) -> str:
 
 
 def extract_wireguard_servers(
-    all_servers: list[dict], country_filter: str | None, city_filter: str | None
+    all_servers: list[dict], country_filter: str | None, city_filter: str | None, group_filter: str | None
 ) -> list[dict]:
     """Return only servers that support WireGuard, optionally filtered by country name."""
     servers = []
@@ -69,6 +69,12 @@ def extract_wireguard_servers(
 
         if city_filter and city_filter.lower() not in city.lower():
             continue
+
+        if group_filter:
+            if not next((g['title'] for g in s.get("groups", []) if g.get('title', '').lower() == group_filter.lower()), False):
+                continue
+
+        groups = ', '.join([g['title'] for g in s.get("groups", [])])
 
         wg_tech = None
         for t in s.get("technologies", []):
@@ -94,6 +100,7 @@ def extract_wireguard_servers(
                 "hostname": s.get("hostname"),
                 "ip": s.get("station"),
                 "load": s.get("load"),
+                "groups": groups,
                 "country": country,
                 "city": city,
                 "public_key": public_key,
@@ -105,12 +112,12 @@ def extract_wireguard_servers(
     return servers
 
 
-def fetch_servers(country_filter: str | None, city_filter: str | None) -> list[dict]:
+def fetch_servers(country_filter: str | None, city_filter: str | None, group_filter: str | None) -> list[dict]:
     """Fetch all Nord servers and filter to WireGuard-capable ones."""
     resp = requests.get(SERVERS_URL, timeout=30)
     resp.raise_for_status()
     data = resp.json()
-    return extract_wireguard_servers(data, country_filter, city_filter)
+    return extract_wireguard_servers(data, country_filter, city_filter, group_filter)
 
 
 def choose_server(servers: list[dict], max_to_show: int) -> dict:
@@ -189,6 +196,11 @@ def main() -> None:
         help="Optional city name filter (e.g. 'London').",
     )
     parser.add_argument(
+        "-g",
+        "--group",
+        help="Optional group filter (e.g. 'Double VPN').",
+    )
+    parser.add_argument(
         "-m",
         "--max",
         type=int,
@@ -208,7 +220,7 @@ def main() -> None:
     private_key = fetch_nordlynx_private_key(token)
 
     print("Fetching server list (this may take a few seconds)...")
-    servers = fetch_servers(args.country, args.locale)
+    servers = fetch_servers(args.country, args.locale, args.group)
 
     server = choose_server(servers, args.max)
 
@@ -222,6 +234,7 @@ def main() -> None:
     print(f"Saved WireGuard config to: {filename}")
     print(f"  Server:  {server['name']} ({server['hostname']})")
     print(f"  Country: {server['country']}, {server['city']}")
+    print(f"  Groups: {server['groups']}")
 
 
 if __name__ == "__main__":

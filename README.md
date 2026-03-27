@@ -99,7 +99,7 @@ PersistentKeepalive = 25
 ## CLI Options
 
 ```
-usage: main.py [-h] [-t TOKEN] [-c COUNTRY] [-m MAX] [-o OUTPUT]
+usage: main.py [-h] [-t TOKEN] [-c COUNTRY] [-l LOCALE] [-g GROUP] [-m MAX] [-o OUTPUT]
 
 Generate a NordVPN WireGuard config using the Nord API.
 
@@ -109,6 +109,10 @@ options:
                         NordVPN access token (otherwise uses NORD_ACCESS_TOKEN env var or prompts)
   -c COUNTRY, --country COUNTRY
                         Optional country name filter (e.g. "Lithuania")
+  -l LOCALE, --locale LOCALE
+                        Optional locale/city name filter (e.g. "San Francisco")
+  -g GROUP, --group GROUP
+                        Optional group name filter (e.g. "Double VPN")
   -m MAX, --max MAX     Max number of servers to show for selection (default: 50)
   -o OUTPUT, --output OUTPUT
                         Output .conf file path (default: <hostname>.conf)
